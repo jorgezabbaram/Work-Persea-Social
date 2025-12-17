@@ -1,2 +1,4 @@
-"""Package marker for inventory-service.application"""
-
+"""Package marker for inventory-service.application"""
+
+
+

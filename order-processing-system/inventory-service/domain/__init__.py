@@ -1,2 +1,4 @@
-"""Package marker for inventory-service.domain"""
-
+"""Package marker for inventory-service.domain"""
+
+
+
