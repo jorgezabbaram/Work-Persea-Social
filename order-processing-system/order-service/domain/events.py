@@ -2,12 +2,14 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from .models import OrderItem
 
 
 class DomainEvent(BaseModel):
+    model_config = ConfigDict(json_encoders={UUID: str})
+    
     event_id: UUID = Field(default_factory=lambda: __import__('uuid').uuid4())
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     event_type: str

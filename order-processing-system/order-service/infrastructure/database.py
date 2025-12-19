@@ -22,7 +22,7 @@ class OrderModel(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True)
     customer_id = Column(UUID(as_uuid=True), nullable=False)
-    items = Column(Text, nullable=False)  # JSON string
+    items = Column(Text, nullable=False)
     total_amount = Column(Float, nullable=False)
     status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

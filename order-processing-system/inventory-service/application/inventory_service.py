@@ -16,13 +16,11 @@ class InventoryService:
         self.message_queue = message_queue
 
     async def handle_order_created(self, event: OrderCreated) -> None:
-        """Handle OrderCreated event and check inventory availability"""
         try:
             for item in event.items:
                 inventory = await self.repository.get_by_product_id(item.product_id)
                 
                 if not inventory:
-                    # Product not found in inventory
                     unavailable_event = InventoryUnavailable(
                         order_id=event.order_id,
                         product_id=item.product_id,
@@ -33,7 +31,6 @@ class InventoryService:
                     return
 
                 if inventory.quantity_available < item.quantity:
-                    # Insufficient inventory
                     unavailable_event = InventoryUnavailable(
                         order_id=event.order_id,
                         product_id=item.product_id,

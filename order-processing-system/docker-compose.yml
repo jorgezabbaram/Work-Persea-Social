@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Database
   postgres:
     image: postgres:15-alpine
     environment:
@@ -12,34 +11,34 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - order-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Message Queue
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_ERLANG_COOKIE: "secret_cookie_here"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - order-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
       timeout: 30s
       retries: 10
 
-  # Order Service
   order-service:
     build:
       context: ./order-service
@@ -60,7 +59,6 @@ services:
       - order-network
     restart: unless-stopped
 
-  # Inventory Service
   inventory-service:
     build:
       context: ./inventory-service
@@ -68,8 +66,9 @@ services:
     ports:
       - "8002:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/order_processing
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/inventory_db
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672/
+      PYTHONPATH: /app
       SERVICE_NAME: inventory-service
     depends_on:
       postgres:
@@ -80,7 +79,6 @@ services:
       - order-network
     restart: unless-stopped
 
-  # Payment Service
   payment-service:
     build:
       context: ./payment-service
@@ -88,8 +86,9 @@ services:
     ports:
       - "8003:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/order_processing
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/payment_db
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672/
+      PYTHONPATH: /app
       SERVICE_NAME: payment-service
     depends_on:
       postgres:
@@ -100,7 +99,6 @@ services:
       - order-network
     restart: unless-stopped
 
-  # Notification Service
   notification-service:
     build:
       context: ./notification-service
@@ -109,7 +107,9 @@ services:
       - "8004:8000"
     environment:
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672/
+      PYTHONPATH: /app
       SERVICE_NAME: notification-service
+
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -120,6 +120,7 @@ services:
 volumes:
   postgres_data:
   rabbitmq_data:
+
 
 networks:
   order-network:

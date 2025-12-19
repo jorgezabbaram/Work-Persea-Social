@@ -9,15 +9,21 @@ from domain.models import Order, OrderStatus
 from .database import OrderModel
 
 
+from pydantic import TypeAdapter
+from domain.models import OrderItem
+
 class OrderRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def create(self, order: Order) -> Order:
+        adapter = TypeAdapter(List[OrderItem])
+        items_json = adapter.dump_json(order.items).decode('utf-8')
+        
         order_model = OrderModel(
             id=order.id,
             customer_id=order.customer_id,
-            items=json.dumps([item.dict() for item in order.items]),
+            items=items_json,
             total_amount=order.total_amount,
             status=order.status,
         )

@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Float, DateTime, Enum
+from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 import os
 import enum
@@ -14,15 +15,17 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 Base = declarative_base()
 
 class PaymentStatus(enum.Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    PROCESSING = "PROCESSING"
+    CANCELLED = "CANCELLED"
 
 class Payment(Base):
     __tablename__ = "payments"
     
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(String, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True)
+    order_id = Column(UUID(as_uuid=True), index=True)
     amount = Column(Float)
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     created_at = Column(DateTime, default=datetime.utcnow)

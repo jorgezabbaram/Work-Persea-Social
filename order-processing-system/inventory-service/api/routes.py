@@ -23,7 +23,6 @@ async def get_inventory(
     product_id: UUID,
     service: InventoryService = Depends(get_inventory_service)
 ) -> InventoryResponse:
-    """Get inventory for a product"""
     inventory = await service.get_inventory(product_id)
     if not inventory:
         raise HTTPException(
@@ -47,7 +46,6 @@ async def update_inventory(
     quantity_available: int,
     service: InventoryService = Depends(get_inventory_service)
 ) -> InventoryResponse:
-    """Update inventory quantity"""
     inventory = await service.update_inventory(product_id, quantity_available)
     if not inventory:
         raise HTTPException(
@@ -65,13 +63,12 @@ async def update_inventory(
     )
 
 
-@router.post("/", response_model=InventoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=InventoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_inventory(
     product_id: UUID,
     quantity_available: int,
     service: InventoryService = Depends(get_inventory_service)
 ) -> InventoryResponse:
-    """Create new inventory item"""
     inventory = InventoryItem(
         product_id=product_id,
         quantity_available=quantity_available

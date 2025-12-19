@@ -20,35 +20,26 @@ class PaymentService:
         self.message_queue = message_queue
 
     async def handle_inventory_reserved(self, event: InventoryReserved) -> None:
-        """Handle InventoryReserved event and process payment with retry logic"""
         try:
-            # Create payment record
             payment = Payment(
                 order_id=event.order_id,
-                amount=0.0,  # This would come from order details in real scenario
+                amount=1.0,
                 status=PaymentStatus.PENDING
             )
             
             created_payment = await self.repository.create(payment)
-            
-            # Process payment with retry logic
             success = await self._process_payment_with_retry(created_payment.id)
             
             if success:
                 await self.repository.update_status(created_payment.id, PaymentStatus.COMPLETED)
-                
-                # Publish success event
                 success_event = PaymentProcessed(
                     order_id=event.order_id,
                     payment_id=created_payment.id,
                     amount=created_payment.amount
                 )
                 await self.message_queue.publish_event(success_event, "payment.processed")
-                
             else:
                 await self.repository.update_status(created_payment.id, PaymentStatus.FAILED)
-                
-                # Publish failure event
                 failure_event = PaymentFailed(
                     order_id=event.order_id,
                     payment_id=created_payment.id,
@@ -58,8 +49,6 @@ class PaymentService:
                 
         except Exception as e:
             logger.error(f"Error handling inventory reserved event: {e}")
-            
-            # Publish failure event
             failure_event = PaymentFailed(
                 order_id=event.order_id,
                 payment_id=UUID('00000000-0000-0000-0000-000000000000'),
@@ -73,15 +62,10 @@ class PaymentService:
         reraise=True
     )
     async def _process_payment_with_retry(self, payment_id: UUID) -> bool:
-        """
-        Simulate payment processing with 80% success rate and exponential backoff retry
-        """
         logger.info(f"Processing payment {payment_id}")
-        
-        # Simulate processing time
         await asyncio.sleep(0.1)
         
-        # Simulate 80% success rate
+        # Simulate success/fail rate
         success = random.random() < 0.8
         
         if not success:
@@ -92,9 +76,7 @@ class PaymentService:
         return True
 
     async def get_payment(self, payment_id: UUID) -> Optional[Payment]:
-        """Get payment by ID"""
         return await self.repository.get_by_id(payment_id)
 
     async def get_payment_by_order(self, order_id: UUID) -> Optional[Payment]:
-        """Get payment by order ID"""
         return await self.repository.get_by_order_id(order_id)

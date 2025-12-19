@@ -32,7 +32,7 @@ class MessageQueue:
             await self.connect()
 
         message = Message(
-            event.json().encode(),
+            event.model_dump_json().encode(),
             content_type="application/json",
             headers={"event_type": event.event_type}
         )
@@ -55,7 +55,6 @@ class MessageQueue:
                     event_data = json.loads(message.body.decode())
                     event_type = message.headers.get("event_type")
                     
-                    # Parse specific event types
                     event = None
                     if event_type == "PaymentProcessed":
                         event = PaymentProcessed(**event_data)

@@ -18,12 +18,11 @@ async def get_order_service(session: AsyncSession = Depends(get_db_session)) -> 
     return OrderService(repository, message_queue)
 
 
-@router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(
     request: CreateOrderRequest,
     service: OrderService = Depends(get_order_service)
 ) -> OrderResponse:
-    """Create a new order"""
     try:
         order = await service.create_order(request)
         return OrderResponse(
@@ -36,6 +35,8 @@ async def create_order(
             updated_at=order.updated_at,
         )
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to create order: {str(e)}"
@@ -47,7 +48,6 @@ async def get_order(
     order_id: UUID,
     service: OrderService = Depends(get_order_service)
 ) -> OrderResponse:
-    """Get order by ID"""
     order = await service.get_order(order_id)
     if not order:
         raise HTTPException(
@@ -72,7 +72,6 @@ async def cancel_order(
     reason: str = "Customer cancellation",
     service: OrderService = Depends(get_order_service)
 ) -> OrderResponse:
-    """Cancel an order"""
     order = await service.cancel_order(order_id, reason)
     if not order:
         raise HTTPException(
@@ -96,7 +95,6 @@ async def list_customer_orders(
     customer_id: UUID,
     service: OrderService = Depends(get_order_service)
 ) -> List[OrderResponse]:
-    """List all orders for a customer"""
     orders = await service.list_customer_orders(customer_id)
     return [
         OrderResponse(

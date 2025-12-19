@@ -37,5 +37,8 @@ if __name__ == '__main__':
 
     if os.getenv('SKIP_MIGRATIONS', '0') != '1':
         run('alembic upgrade head')
+        if os.path.exists('seed.py'):
+            print('-> running seed data...')
+            run('python seed.py')
 
     os.execvp('uvicorn', ['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8000'])

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -22,5 +22,6 @@ async def send_notification(notification: NotificationRequest):
     }
 
 @router.get("/notifications")
-async def get_notifications():
-    return {"notifications": []}
+async def get_notifications(request: Request):
+    service = request.app.state.notification_service
+    return {"notifications": service.get_notifications()}
